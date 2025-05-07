@@ -3,7 +3,7 @@ import {
   Box, Card, CardContent, Typography, Grid, Button, IconButton, CircularProgress, 
   Paper, Divider, Chip, Tooltip, Alert 
 } from '@mui/material';
-import { useTheme } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { 
   ArrowBackOutlined as BackIcon,
   RefreshOutlined as RefreshIcon,
@@ -30,6 +30,9 @@ const PatientAnalysisDetails = () => {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
 
   // Charger les données patient + analyses
   useEffect(() => {
@@ -231,6 +234,7 @@ const renderStatusChip = (status) => (
             return (
               <Grid item xs={12} md={6} key={index}>
                 <Card sx={{
+                  backgroundColor: isDarkMode ? '#1F2A40' : '#ffffff',
                   height: '100%',
                   borderRadius: 2,
                   boxShadow: 3,
