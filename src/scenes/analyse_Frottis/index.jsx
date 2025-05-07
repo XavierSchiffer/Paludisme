@@ -8,6 +8,8 @@ import { apiMalaria } from "../../api";
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import Header from '../../components/Header';
+import { tokens } from '../../theme';
+import { useTheme } from '@mui/material/styles';
 
 // Register chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -20,6 +22,9 @@ const AnalyseFrottis = () => {
   const [loading, setLoading] = useState(false);
   const [resultat, setResultat] = useState(null);
   const [error, setError] = useState('');
+  const theme = useTheme(); 
+  const isDarkMode = theme.palette.mode === 'dark';
+
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -148,7 +153,7 @@ const AnalyseFrottis = () => {
         />
       </Box>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: isDarkMode ? '#1F2A40' : '#ffffff', }}>
         <form onSubmit={handleAnalyse}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
@@ -270,7 +275,7 @@ const AnalyseFrottis = () => {
                     display: 'flex', 
                     justifyContent: 'center', 
                     alignItems: 'center',
-                    backgroundColor: 'rgba(0,0,0,0.03)'
+                    backgroundColor: 'rgba(241, 225, 225, 0.03)'
                   }}
                 >
                   <Typography variant="body1" color="textSecondary">
@@ -288,7 +293,7 @@ const AnalyseFrottis = () => {
       )}
 
       {resultat && (
-        <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+        <Paper elevation={3} sx={{ p: 3, mt: 3, backgroundColor: isDarkMode ? ' #1F2A40' : '#ffffff', }}>
           <Typography variant="h5" color="primary" gutterBottom sx={{ fontWeight: 'bold' }}>
             Résultat d'analyse
           </Typography>

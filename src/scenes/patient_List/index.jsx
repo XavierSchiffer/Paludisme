@@ -39,35 +39,29 @@ const PatientList = () => {
   // Définition des colonnes adaptées au modèle Patient
   const columns = [
     { 
-      field: 'id', 
-      headerName: 'ID', 
-      width: 90 
-    },
-    { 
       field: 'code_patient', 
       headerName: 'Code Patient', 
-      flex: 1 
+      width: 190
     },
     { 
       field: 'nom', 
       headerName: 'Nom', 
-      flex: 1 
+      width: 190
     },
     { 
       field: 'sexe', 
       headerName: 'Sexe', 
-      flex: 1 
+      width: 120
     },
     { 
       field: 'age', 
       headerName: 'Âge', 
-      flex: 1,
-      type: 'number'
+      width: 100
     },
     { 
       field: 'email', 
       headerName: 'Email', 
-      flex: 1 
+      width: 190
     },
     {
       field: 'actions',
@@ -226,6 +220,8 @@ const PatientList = () => {
       </Box>
       <Box
         height="75vh"
+        maxWidth="1000px"
+        margin="0 auto"
         sx={{
           "& .MuiDataGrid-root": { 
             border: "none", 

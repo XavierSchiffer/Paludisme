@@ -44,28 +44,27 @@ const PatientAnalyseList = () => {
     { 
       field: 'code_patient', 
       headerName: 'Code Patient', 
-      width: 140 
+      width: 190 
     },
     { 
       field: 'nom', 
       headerName: 'Nom', 
-      flex: 100
+      width: 190
     },
     { 
       field: 'sexe', 
       headerName: 'Sexe', 
-      width: 80 
+      width: 100
     },
     { 
       field: 'age', 
       headerName: 'Âge', 
-      width: 120,
-      type: 'number'
+      width: 80
     },
     {
       field: 'analyses',
       headerName: 'Analyses',
-      width: 120,
+      width: 150,
       renderCell: (params) => {
         const analysesCount = params.row.analyses?.length || 0;
         return (
@@ -233,6 +232,8 @@ const PatientAnalyseList = () => {
       </Box>
       <Box
         height="75vh"
+        maxWidth="800px" // Limite la largeur totale
+        margin="0 auto" // Centre le tableau
         sx={{
           "& .MuiDataGrid-root": { 
             border: "none", 
