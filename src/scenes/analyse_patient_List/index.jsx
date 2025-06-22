@@ -19,6 +19,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { tokens } from '../../theme';
 import { apiMalaria } from '../../api';
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 
 const PatientAnalysisDetails = () => {
   const theme = useTheme();
@@ -30,9 +31,8 @@ const PatientAnalysisDetails = () => {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const theme = useTheme();
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const isDarkMode = theme.palette.mode === 'dark';
-
 
   // Charger les données patient + analyses
   useEffect(() => {
@@ -73,6 +73,86 @@ const PatientAnalysisDetails = () => {
 
   const handlePrint = () => window.print();
 
+  // Nouvelle fonction pour télécharger le rapport PDF
+  const handleDownloadPDF = async () => {
+    if (!patient) {
+      setError("Aucune donnée patient disponible pour générer le rapport.");
+      return;
+    }
+
+    console.log("Base URL:", apiMalaria.defaults.baseURL);
+    console.log("URL complète:", `${apiMalaria.defaults.baseURL}rapportpdf/`);
+    console.log("Patient ID:", patientId);
+  
+    setDownloadingPdf(true);
+    setError(null);
+  
+    try {
+      const response = await apiMalaria.post('rapportpdf/', {
+        id_patient: patientId
+      }, {
+        responseType: 'blob',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 60000, // Augmenter le timeout
+        // Ajouter cette option pour les requêtes CORS
+        // withCredentials: false,
+      });
+  
+      // Vérifier explicitement le type de contenu
+      const contentType = response.headers['content-type'];
+      if (!contentType || !contentType.includes('application/pdf')) {
+        throw new Error("La réponse n'est pas un PDF valide");
+      }
+  
+      // Créer le blob avec le type explicite
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      
+      // Vérifier que le blob n'est pas vide
+      if (blob.size === 0) {
+        throw new Error("Le fichier PDF est vide");
+      }
+      
+      const url = window.URL.createObjectURL(blob);
+      
+      // Nom de fichier plus sûr
+      const filename = `rapport_${patient.nom?.replace(/[^a-zA-Z0-9]/g, '_') || 'patient'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Nettoyer après un délai plus long
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+      
+      console.log("Rapport PDF téléchargé avec succès");
+      
+    } catch (err) {
+      console.error("Erreur complète:", err);
+      console.error("Réponse:", err.response);
+      
+      if (err.code === 'ERR_NETWORK') {
+        setError("Erreur de réseau ou CORS. Le PDF a peut-être été généré mais n'a pas pu être téléchargé.");
+      } else if (err.response?.status === 404) {
+        setError("Aucune analyse trouvée pour ce patient.");
+      } else {
+        setError(`Erreur lors du téléchargement: ${err.message}`);
+      }
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+  
   const handleExport = () => {
     const exportData = analyses.map((a) => {
       let parasitized = 0, uninfected = 0;
@@ -154,7 +234,7 @@ const PatientAnalysisDetails = () => {
     }
   };
   
-const renderStatusChip = (status) => (
+  const renderStatusChip = (status) => (
     <Chip
       icon={
         status === "Parasité"
@@ -167,7 +247,6 @@ const renderStatusChip = (status) => (
       sx={{ fontWeight: "bold" }}
     />
   );
-  
 
   const handleBackToList = () => navigate('/patients');
 
@@ -195,21 +274,62 @@ const renderStatusChip = (status) => (
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box display="flex" alignItems="center">
-          {/* <IconButton onClick={handleBackToList} sx={{ mr: 2 }}>
-            <BackIcon />
-          </IconButton> */}
           <Header 
             title={`ANALYSES DE ${patient?.nom?.toUpperCase() || 'PATIENT'}`}
             subtitle={`Code patient: ${patient?.code_patient || 'Non disponible'}`}
           />
         </Box>
+        <Button
+            onClick={handleDownloadPDF}
+            disabled={downloadingPdf || !patient}
+            sx={{
+              backgroundColor: colors.blueAccent[700],
+              color: colors.grey[100],
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              "&:hover": {
+                backgroundColor: colors.blueAccent[800],
+              },
+              "&:disabled": {
+                backgroundColor: colors.grey[600],
+                color: colors.grey[300],
+              }
+            }}
+          >
+            {downloadingPdf ? (
+              <CircularProgress size={20} sx={{ mr: "10px", color: colors.grey[100] }} />
+            ) : (
+              <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            )}
+            {downloadingPdf ? "Génération..." : "Download Reports"}
+          </Button>
+        
         <Box display="flex" gap={1}>
-          <Tooltip title="Rafraîchir les données"><IconButton onClick={handleRefresh} color="primary"><RefreshIcon /></IconButton></Tooltip>
-          {/* <Tooltip title="Ajouter une analyse"><Button variant="contained" startIcon={<AddIcon />} onClick={handleAddAnalysis} sx={{ bgcolor: colors.greenAccent[600] }}>Nouvelle analyse</Button></Tooltip> */}
-          <Tooltip title="Imprimer"><IconButton onClick={handlePrint} color="primary"><PrintIcon /></IconButton></Tooltip>
-          <Tooltip title="Exporter (CSV)"><IconButton onClick={handleExport} color="primary"><DownloadIcon /></IconButton></Tooltip>
+          <Tooltip title="Rafraîchir les données">
+            <IconButton onClick={handleRefresh} color="primary">
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Imprimer">
+            <IconButton onClick={handlePrint} color="primary">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Exporter (CSV)">
+            <IconButton onClick={handleExport} color="primary">
+              <DownloadIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
+
+      {/* Affichage d'erreur pour le PDF */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       {/* Info patient */}
       <Paper elevation={3} sx={{ p: 2, mb: 3, bgcolor: colors.primary[400], borderLeft: `6px solid ${colors.blueAccent[500]}` }}>
